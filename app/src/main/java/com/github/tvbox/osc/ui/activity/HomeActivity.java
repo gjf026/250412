@@ -290,7 +290,7 @@ public class HomeActivity extends BaseActivity {
                 }
                 initViewPager(absXml);
                 SourceBean home = ApiConfig.get().getHomeSourceBean();
-            //    if (home != null && home.getName() != null && !home.getName().isEmpty()) tvName.setText(home.getName());
+                if (home != null && home.getName() != null && !home.getName().isEmpty()) tvName.setText(home.getName());
                 tvName.clearAnimation();
             }
         });
@@ -323,7 +323,7 @@ public class HomeActivity extends BaseActivity {
                         mHandler.postDelayed(new Runnable() {
                             @Override
                             public void run() {
-                                if (!useCacheConfig) Toast.makeText(HomeActivity.this, "自定义jar加载成功", Toast.LENGTH_SHORT).show();
+//                                if (!useCacheConfig) Toast.makeText(HomeActivity.this, "自定义jar加载成功", Toast.LENGTH_SHORT).show();
                                 initData();
                             }
                         }, 50);
@@ -476,8 +476,8 @@ public class HomeActivity extends BaseActivity {
     @SuppressLint("NotifyDataSetChanged")
     @Override
     public void onBackPressed() {
-        //打断加载
-        if(isLoading()){
+        // 打断加载
+        if (isLoading()) {
             refreshEmpty();
             return;
         }
@@ -504,34 +504,36 @@ public class HomeActivity extends BaseActivity {
             // 如果 sortFocusView 存在且没有获取焦点，则请求焦点
             if (this.sortFocusView != null && !this.sortFocusView.isFocused()) {
                 this.sortFocusView.requestFocus();
-                return;
             }
             // 如果当前不是第一个界面，则将列表设置到第一项
             else if (this.sortFocused != 0) {
                 this.mGridView.setSelection(0);
-                return;
             } else {
                 doExit();
-                return;
             }
         } else if (baseLazyFragment instanceof UserFragment && UserFragment.tvHotList.canScrollVertically(-1)) {
             // 如果 UserFragment 列表可以向上滚动，则滚动到顶部
             UserFragment.tvHotList.scrollToPosition(0);
             this.mGridView.setSelection(0);
-            return;
         } else {
             doExit();
-            return;
         }
     }
 
     private void doExit() {
         // 如果两次返回间隔小于 2000 毫秒，则退出应用
         if (System.currentTimeMillis() - mExitTime < 2000) {
+            // 1. 关闭所有 Activity
+            AppManager.getInstance().finishAllActivity();
+
+            // 2. 注销 EventBus 等其他组件
             EventBus.getDefault().unregister(this);
-            AppManager.getInstance().appExit(0);
+
+            // 3. 停止 WebSocket 等长连接
             ControlManager.get().stopServer();
+
             finish();
+            android.os.Process.killProcess(android.os.Process.myPid());
             System.exit(0);
         } else {
             // 否则仅提示用户，再按一次退出应用
